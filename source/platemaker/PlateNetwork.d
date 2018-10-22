@@ -15,12 +15,16 @@ class PlateNetwork {
     /**
      * Initalizes a new PlateNetwork
      * Begins with uniformly (with noise) distributed loci for triple junctions
+     * Uses a "planet" that is twice as wide as it is tall (like a rectagular mapping of Earth)
      * TODO:
      */
     this(int numDivisions) {
+        //Create square areas with which to distribute the intial boundaries
+        //Makes for a semi-uniformly distributed range of junctions
+        //TODO: make junctions better spaced?
         double dx = 1.0 / numDivisions;
-        for(double lon; lon < 2.0; lon += dx) {
-            for(double lat; lon < 1.0; lon += dx) {
+        for(double x; x < 2.0; x += dx) {
+            for(double y; y < 1.0; y += dx) {
                 
             }
         }
@@ -31,12 +35,15 @@ class PlateNetwork {
      * TODO:
      */
     void make() {
-        bool segAdded = true;
-        while(segAdded) {
-            
-        }
+        
     }
 
+    /**
+     * Extends all actively growing plate boundaries
+     * TODO:
+     */
+    void extendBoundaries() {
 
+    }
 
 }
