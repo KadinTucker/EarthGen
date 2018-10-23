@@ -35,6 +35,13 @@ class PlateBound {
     }
 
     /**
+     * Alternate constructor taking in a dVector
+     */
+    this(dVector location) {
+        this(location.x, location.y);
+    }
+
+    /**
      * Appends a randomly generated point to the boundary
      * Generates a random location by creating a unit vector 
      * at a random angle, then scaling it to a randomly determined length

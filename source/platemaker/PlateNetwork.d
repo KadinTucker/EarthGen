@@ -9,29 +9,32 @@ import platemaker;
  */
 class PlateNetwork {
 
-    double[2] junctions; ///A list of each junction between plate boundaries
+    dVector[] junctions; ///A list of each junction between plate boundaries
     PlateBound[] boundaries; ///A list of every plate boundary
 
     /**
      * Initalizes a new PlateNetwork
      * Begins with uniformly (with noise) distributed loci for triple junctions
      * Uses a "planet" that is twice as wide as it is tall (like a rectagular mapping of Earth)
-     * TODO:
+     * numDivisions is equal to the number of starting boundary locations
      */
     this(int numDivisions) {
-        //Create square areas with which to distribute the intial boundaries
-        //Makes for a semi-uniformly distributed range of junctions
-        //TODO: make junctions better spaced?
-        double dx = 1.0 / numDivisions;
-        for(double x; x < 2.0; x += dx) {
-            for(double y; y < 1.0; y += dx) {
-                
+        //Create square areas with which to distribute the intial boundaries 
+        //TODO: make loci better spacing with weight toward closer to the centers?
+        double boundSize = 1.0 / numDivisions;
+        for(double x; x < 2.0; x += boundSize) {
+            for(double y; y < 1.0; y += boundSize) {
+                //Runs thrice in order to have the boundary extend in three directions; inits a junction
+                dVector location = new dVector(uniform(x, x + boundSize), uniform(y, y + boundSize));
+                for(i; 0..3) this.boundaries ~= new PlateBound(location.x, location.y);
+                this.junctions ~= location;
             }
         }
     }
 
     /**
      * Generates a random plate network
+     * Acts as the main method, of sorts
      * TODO:
      */
     void make() {
@@ -43,7 +46,11 @@ class PlateNetwork {
      * TODO:
      */
     void extendBoundaries() {
-
+        foreach(bound; this.boundaries) {
+            if(!bound.isClosed) {
+                bound.append();
+            }
+        }
     }
 
 }
