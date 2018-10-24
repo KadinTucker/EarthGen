@@ -24,7 +24,8 @@ class StackNode(T) {
  */
 class Stack(T) {
 
-    private StackNode!T top; ///The top node of the stack
+    StackNode!T top; ///The top node of the stack
+    int size;
 
     /**
      * Pushes the given value to the top of the stack
@@ -33,6 +34,7 @@ class Stack(T) {
         StackNode!T newNode = new StackNode!T(value);
         newNode.next = this.top;
         this.top = newNode;
+        this.size += 1;
     }
 
     /**
@@ -51,6 +53,7 @@ class Stack(T) {
         }
         T toReturn = this.top.value;
         this.top = this.top.next;
+        this.size -= 1;
         return toReturn;
     }
 
@@ -59,6 +62,16 @@ class Stack(T) {
      */
     bool isEmpty() {
         return this.top is null;
+    }
+
+    /**
+     * Returns a duplicate of this stack with a different memory address
+     * Uses the same stack nodes as this stack, but the variability of the head nodes does not matter
+     */
+    Stack!T softClone() {
+        Stack!T newStack = new Stack!T();
+        newStack.top = this.top;
+        return newStack;
     }
 
 }

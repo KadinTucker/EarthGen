@@ -26,7 +26,7 @@ class PlateNetwork {
             for(double y; y < 1.0; y += boundSize) {
                 //Runs thrice in order to have the boundary extend in three directions; inits a junction
                 dVector location = new dVector(uniform(x, x + boundSize), uniform(y, y + boundSize));
-                for(i; 0..3) this.boundaries ~= new PlateBound(location.x, location.y);
+                foreach(i; 0..3) this.boundaries ~= new PlateBound(location.x, location.y);
                 this.junctions ~= location;
             }
         }
