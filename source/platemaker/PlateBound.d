@@ -31,6 +31,8 @@ class PlateBound {
      * Takes in the location of the initial point on the planet
      */
     this(double x, double y) {
+        this.segments = new Stack!dVector();
+        this.angles = new Stack!double();
         this.segments.push(new dVector(x, y));
     }
 
@@ -46,13 +48,16 @@ class PlateBound {
      * Generates a random location by creating a unit vector 
      * at a random angle, then scaling it to a randomly determined length
      * between the minimum and maximum as defined.
+     * Returns the new segment appended
      */
-    void append() {
+    dSegment append() {
         double randomAngle = this.getRandomAngle();
         dVector newPoint = new dVector(cos(randomAngle), sin(randomAngle));
         newPoint.magnitude = uniform(cast(double) BoundGenConstants.MIN_LENGTH, cast(double) BoundGenConstants.MAX_LENGTH);
-        this.segments.push(newPoint);
+        dVector prevPoint = this.segments.peek();
+        this.segments.push(newPoint + prevPoint);
         this.angles.push(randomAngle);
+        return new dSegment(this.segments.peek(), prevPoint);
     }
 
     /**

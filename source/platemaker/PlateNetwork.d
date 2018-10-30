@@ -11,6 +11,7 @@ class PlateNetwork {
 
     dVector[] junctions; ///A list of each junction between plate boundaries
     PlateBound[] boundaries; ///A list of every plate boundary
+    dSegment[] allSegments; ///A list of all segments, used to check for intersections
 
     /**
      * Initalizes a new PlateNetwork
@@ -22,14 +23,15 @@ class PlateNetwork {
         //Create square areas with which to distribute the intial boundaries 
         //TODO: make loci better spacing with weight toward closer to the centers?
         double boundSize = 1.0 / numDivisions;
-        for(double x; x < 2.0; x += boundSize) {
-            for(double y; y < 1.0; y += boundSize) {
+        for(double x = 0.0; x < 2.0; x += 2 * boundSize) {
+            for(double y = 0.0; y < 1.0; y += boundSize) {
                 //Runs thrice in order to have the boundary extend in three directions; inits a junction
                 dVector location = new dVector(uniform(x, x + boundSize), uniform(y, y + boundSize));
                 foreach(i; 0..3) this.boundaries ~= new PlateBound(location.x, location.y);
                 this.junctions ~= location;
             }
         }
+        this.make();
     }
 
     /**
@@ -38,19 +40,31 @@ class PlateNetwork {
      * TODO:
      */
     void make() {
-        
+        //Currently a mode just as a test
+        //Runs extend boundaries six times
+        foreach(i; 0..6) {
+            extendBoundaries();
+        }
     }
 
     /**
      * Extends all actively growing plate boundaries
-     * TODO:
+     * Runs the boundaries' append method, and checks if
+     * the appended location causes an intersection
+     * If so, closes the boundary
      */
     void extendBoundaries() {
         foreach(bound; this.boundaries) {
             if(!bound.isClosed) {
-                bound.append();
+                if(this.intersects(bound.append())) {
+
+                }
             }
         }
+    }
+
+    bool intersects(dVector) {
+        
     }
 
 }

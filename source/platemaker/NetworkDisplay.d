@@ -34,6 +34,9 @@ class NetworkDisplay : Activity {
      */
     override void draw() {
         this.container.renderer.clear(Color(150, 150, 150));
+        foreach(bound; this.network.boundaries) {
+            this.drawPlateBound(bound);
+        }
     }
 
     /**
@@ -43,10 +46,11 @@ class NetworkDisplay : Activity {
         Stack!dVector verts = bound.segments.softClone();
         while(!verts.isEmpty()) {
             dVector popped = verts.pop();
+            dVector peeked = (verts.isEmpty())? popped : verts.peek();
             this.container.renderer.draw(new iVector(cast(int) (popped.x * this.container.window.size.x / 2), 
                     cast(int) (popped.y * this.container.window.size.y)), 
-                    new iVector(cast(int) (verts.peek().x * this.container.window.size.x / 2), 
-                    cast(int) (verts.peek().y * this.container.window.size.y)));
+                    new iVector(cast(int) (peeked.x * this.container.window.size.x / 2), 
+                    cast(int) (peeked.y * this.container.window.size.y)));
         }
     }
 
