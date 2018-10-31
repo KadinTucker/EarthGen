@@ -22,7 +22,7 @@ enum BoundGenConstants {
  */
 class PlateBound {
 
-    Stack!dVector segments; ///The stack of connected points that make up the boundary
+    Stack!dVector points; ///The stack of connected points that make up the boundary
     Stack!double angles; ///The direction of the previous segment
     bool isClosed; ///Whether or not the boundary is itself bounded; by default false
 
@@ -31,9 +31,9 @@ class PlateBound {
      * Takes in the location of the initial point on the planet
      */
     this(double x, double y) {
-        this.segments = new Stack!dVector();
+        this.points = new Stack!dVector();
         this.angles = new Stack!double();
-        this.segments.push(new dVector(x, y));
+        this.points.push(new dVector(x, y));
     }
 
     /**
@@ -54,10 +54,10 @@ class PlateBound {
         double randomAngle = this.getRandomAngle();
         dVector newPoint = new dVector(cos(randomAngle), sin(randomAngle));
         newPoint.magnitude = uniform(cast(double) BoundGenConstants.MIN_LENGTH, cast(double) BoundGenConstants.MAX_LENGTH);
-        dVector prevPoint = this.segments.peek();
-        this.segments.push(newPoint + prevPoint);
+        dVector prevPoint = this.points.peek();
+        this.points.push(newPoint + prevPoint);
         this.angles.push(randomAngle);
-        return new dSegment(this.segments.peek(), prevPoint);
+        return new dSegment(this.points.peek(), prevPoint);
     }
 
     /**

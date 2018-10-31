@@ -43,7 +43,7 @@ class NetworkDisplay : Activity {
      * Draws a PlateBound object
      */
     private void drawPlateBound(PlateBound bound) {
-        Stack!dVector verts = bound.segments.softClone();
+        Stack!dVector verts = bound.points.softClone();
         while(!verts.isEmpty()) {
             dVector popped = verts.pop();
             dVector peeked = (verts.isEmpty())? popped : verts.peek();

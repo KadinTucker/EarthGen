@@ -1,5 +1,6 @@
 module platemaker.PlateNetwork;
 
+import std.algorithm;
 import std.random;
 import d2d;
 import platemaker;
@@ -10,7 +11,7 @@ import platemaker;
 class PlateNetwork {
 
     dVector[] junctions; ///A list of each junction between plate boundaries
-    PlateBound[] boundaries; ///A list of every plate boundary
+    PlateBound[] boundaries; ///A list of every open plate boundary
     dSegment[] allSegments; ///A list of all segments, used to check for intersections
 
     /**
@@ -22,16 +23,17 @@ class PlateNetwork {
     this(int numDivisions) {
         //Create square areas with which to distribute the intial boundaries 
         //TODO: make loci better spacing with weight toward closer to the centers?
+        PlateBound[] openBoundaries;
         double boundSize = 1.0 / numDivisions;
         for(double x = 0.0; x < 2.0; x += 2 * boundSize) {
             for(double y = 0.0; y < 1.0; y += boundSize) {
                 //Runs thrice in order to have the boundary extend in three directions; inits a junction
                 dVector location = new dVector(uniform(x, x + boundSize), uniform(y, y + boundSize));
-                foreach(i; 0..3) this.boundaries ~= new PlateBound(location.x, location.y);
+                foreach(i; 0..3) openBoundaries ~= new PlateBound(location.x, location.y);
                 this.junctions ~= location;
             }
         }
-        this.make();
+        this.make(openBoundaries);
     }
 
     /**
@@ -39,11 +41,11 @@ class PlateNetwork {
      * Acts as the main method, of sorts
      * TODO:
      */
-    void make() {
+    void make(PlateBound[] openBoundaries) {
         //Currently a mode just as a test
         //Runs extend boundaries six times
         foreach(i; 0..6) {
-            extendBoundaries();
+            extendBoundaries(openBoundaries);
         }
     }
 
@@ -53,18 +55,23 @@ class PlateNetwork {
      * the appended location causes an intersection
      * If so, closes the boundary
      */
-    void extendBoundaries() {
-        foreach(bound; this.boundaries) {
+    void extendBoundaries(PlateBound[] openBoundaries) {
+        foreach(bound; openBoundaries) {
             if(!bound.isClosed) {
                 if(this.intersects(bound.append())) {
-
+                    this.boundaries ~= bound;
+                    openBoundaries.remove(openBoundaries.countUntil(bound));
                 }
             }
         }
     }
 
-    bool intersects(dVector) {
-        
+    /**
+     * Returns whether the given segment intersects any 
+     * of the segments alreadyon the plate network
+     */
+    bool intersects(dSegment seg) {
+        return false;
     }
 
 }
