@@ -24,7 +24,7 @@ class PlateBound {
 
     Stack!dVector points; ///The stack of connected points that make up the boundary
     Stack!double angles; ///The direction of the previous segment
-    bool isClosed; ///Whether or not the boundary is itself bounded; by default false
+    int length; ///How many segments compose this bound
 
     /**
      * Initializes the plate boundary
@@ -57,6 +57,7 @@ class PlateBound {
         dVector prevPoint = this.points.peek();
         this.points.push(newPoint + prevPoint);
         this.angles.push(randomAngle);
+        this.length++;
         return new dSegment(this.points.peek(), prevPoint);
     }
 

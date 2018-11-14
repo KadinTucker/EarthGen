@@ -44,9 +44,14 @@ class PlateNetwork {
     void make(PlateBound[] openBoundaries) {
         //Currently a mode just as a test
         //Runs extend boundaries six times
-        foreach(i; 0..6) {
+        foreach(i; 0..12) {
             extendBoundaries(openBoundaries);
         }
+        //Place all boundaries that didn't close into boundaries
+        foreach(bound; openBoundaries) {
+            this.boundaries ~= bound;
+        }
+        std.stdio.writeln("finished");
     }
 
     /**
@@ -57,21 +62,50 @@ class PlateNetwork {
      */
     void extendBoundaries(PlateBound[] openBoundaries) {
         foreach(bound; openBoundaries) {
-            if(!bound.isClosed) {
-                if(this.intersects(bound.append())) {
-                    this.boundaries ~= bound;
-                    openBoundaries.remove(openBoundaries.countUntil(bound));
-                }
+            this.allSegments ~= bound.append();
+            if(bound.length > 1 && this.intersectsExisting(getRectFromSeg(this.allSegments[this.allSegments.length - 1]))) {
+                this.boundaries ~= bound;
+                openBoundaries.remove(openBoundaries.countUntil(bound));
             }
         }
     }
 
-    /**
-     * Returns whether the given segment intersects any 
-     * of the segments alreadyon the plate network
-     */
-    bool intersects(dSegment seg) {
+    bool intersectsExisting(dRectangle seg) {
+        foreach(segment; allSegments) {
+            if(intersects(seg, getRectFromSeg(segment))) {
+                std.stdio.writeln("intersection found");
+                return true;
+            }
+        }
         return false;
+    }
+
+    /**
+     * Returns whether the two given segments intersect
+     */
+    bool intersects(dRectangle seg1, dRectangle seg2) {
+        double m1 = seg1.extent.y / seg1.extent.x;
+        double m2 = seg2.extent.y / seg2.extent.x;
+        if(m1 == m2) {
+            return false; //For our purposes, segments on top of each other will not be considered to be intersecting
+        }
+        double x = (m1 * seg1.initialPoint.x - m2 * seg2.initialPoint.x - seg1.initialPoint.y + seg2.initialPoint.y)
+                / (m1 - m2);
+        //std.stdio.write("y = "); std.stdio.write(m1); std.stdio.write("x + "); std.stdio.writeln(seg1.initialPoint.y + seg1.initialPoint.x);
+        //std.stdio.write("y = "); std.stdio.write(m2); std.stdio.write("x + "); std.stdio.writeln(seg2.initialPoint.y + seg2.initialPoint.x);
+        //std.stdio.write("x = "); std.stdio.writeln(x);
+        if(x >= min(seg1.initialPoint.x, seg1.initialPoint.x + seg1.extent.x, 
+                seg1.initialPoint.y, seg1.initialPoint.y + seg1.extent.y) 
+                && x <= max(seg1.initialPoint.x, seg1.initialPoint.x + seg1.extent.x, 
+                seg1.initialPoint.y, seg1.initialPoint.y + seg1.extent.y)) {
+            std.stdio.writeln("intersection found");
+            return true;
+        }
+        return false;
+    }
+
+    dRectangle getRectFromSeg(dSegment segment) {
+        return new dRectangle(segment.initial.x, segment.initial.y, segment.terminal.x, segment.terminal.y);
     }
 
 }

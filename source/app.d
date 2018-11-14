@@ -5,6 +5,7 @@ import platemaker;
 
 void main() {
     Display display = new Display(500, 400, SDL_WINDOW_SHOWN, 0, "Plate Maker");
-    display.activity = new NetworkDisplay(display, new PlateNetwork(4));
+    PlateNetwork network = new PlateNetwork(4);
+    display.activity = new NetworkDisplay(display, network);
     display.run();
 }
