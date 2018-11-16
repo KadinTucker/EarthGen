@@ -25,6 +25,7 @@ class PlateBound {
     Stack!dVector points; ///The stack of connected points that make up the boundary
     Stack!double angles; ///The direction of the previous segment
     int length; ///How many segments compose this bound
+    bool isClosed; ///Whether or not the boundary is closed
 
     /**
      * Initializes the plate boundary
@@ -50,7 +51,7 @@ class PlateBound {
      * between the minimum and maximum as defined.
      * Returns the new segment appended
      */
-    dSegment append() {
+    dVector append() {
         double randomAngle = this.getRandomAngle();
         dVector newPoint = new dVector(cos(randomAngle), sin(randomAngle));
         newPoint.magnitude = uniform(cast(double) BoundGenConstants.MIN_LENGTH, cast(double) BoundGenConstants.MAX_LENGTH);
@@ -58,7 +59,7 @@ class PlateBound {
         this.points.push(newPoint + prevPoint);
         this.angles.push(randomAngle);
         this.length++;
-        return new dSegment(this.points.peek(), prevPoint);
+        return this.points.peek();
     }
 
     /**

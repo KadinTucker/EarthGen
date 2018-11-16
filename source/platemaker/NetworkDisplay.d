@@ -44,6 +44,8 @@ class NetworkDisplay : Activity {
      */
     private void drawPlateBound(PlateBound bound) {
         Stack!dVector verts = bound.points.softClone();
+        if(bound.isClosed) this.container.renderer.drawColor = Color(0, 0, 0);
+        else this.container.renderer.drawColor = Color(255, 0, 0);
         while(!verts.isEmpty()) {
             dVector popped = verts.pop();
             dVector peeked = (verts.isEmpty())? popped : verts.peek();
@@ -51,6 +53,15 @@ class NetworkDisplay : Activity {
                     cast(int) (popped.y * this.container.window.size.y)), 
                     new iVector(cast(int) (peeked.x * this.container.window.size.x / 2), 
                     cast(int) (peeked.y * this.container.window.size.y)));
+        }
+    }
+
+    /**
+     * Handles events
+     */
+    override void handleEvent(SDL_Event event) {
+        if(event.type == SDL_MOUSEBUTTONDOWN) {
+            this._network.extendBoundaries();
         }
     }
 
