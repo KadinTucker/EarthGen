@@ -10,8 +10,8 @@ import std.random;
  * in expanding plate boundaries
  */
 enum BoundGenConstants {
-    MIN_LENGTH=0.03,
-    MAX_LENGTH=0.1,
+    MIN_LENGTH=0.02,
+    MAX_LENGTH=0.05,
     ANGLE_VARIATION=PI_4
 }
 

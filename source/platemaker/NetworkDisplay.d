@@ -43,7 +43,7 @@ class NetworkDisplay : Activity {
      * Draws a PlateBound object
      */
     private void drawPlateBound(PlateBound bound) {
-        Stack!dVector verts = bound.points.softClone();
+        Stack!dVector verts = bound.points;
         if(bound.isClosed) this.container.renderer.drawColor = Color(0, 0, 0);
         else this.container.renderer.drawColor = Color(255, 0, 0);
         while(!verts.isEmpty()) {
