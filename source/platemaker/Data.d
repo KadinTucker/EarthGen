@@ -83,9 +83,12 @@ class Queue(T) {
      */
     void enqueue(T value) {
         Node!T newNode = new Node!T(value);
-        this.bottom.next = newNode;
-        this.bottom = newNode;
-        this.size += 1;
+        if(this.bottom is null) this.bottom = newNode;
+        else {
+            this.bottom.next = newNode;
+            this.bottom = newNode;
+            this.size += 1;
+        }
         if(this.top is null) this.top = newNode;
     }
 
@@ -93,6 +96,9 @@ class Queue(T) {
      * Returns the value of the top node
      */
     T peek() {
+        if(this.isEmpty()) {
+            throw new Exception("Queue empty");
+        }
         return this.top.value;
     }
 
@@ -110,10 +116,27 @@ class Queue(T) {
     }
 
     /**
+     * Dequeues the top and adds the item to the bottom for the purpose of iteration
+     * More efficient than dequeuing and enqueuing manually
+     */
+    void iterate() {
+        this.bottom.next = this.top;
+        this.bottom = this.top;
+        this.top = this.top.next;
+    }
+
+    /**
      * Returns whether or not the queue is empty
      */
     bool isEmpty() {
         return this.top is null;
+    }
+
+    /**
+     * Reverses the order of the queue
+     */
+    void reverse() {
+        
     }
 
 }

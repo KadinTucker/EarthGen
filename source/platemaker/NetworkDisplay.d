@@ -43,16 +43,17 @@ class NetworkDisplay : Activity {
      * Draws a PlateBound object
      */
     private void drawPlateBound(PlateBound bound) {
-        Stack!dVector verts = bound.points;
         if(bound.isClosed) this.container.renderer.drawColor = Color(0, 0, 0);
         else this.container.renderer.drawColor = Color(255, 0, 0);
-        while(!verts.isEmpty()) {
-            dVector popped = verts.pop();
-            dVector peeked = (verts.isEmpty())? popped : verts.peek();
-            this.container.renderer.draw(new iVector(cast(int) (popped.x * this.container.window.size.x / 2), 
-                    cast(int) (popped.y * this.container.window.size.y)), 
-                    new iVector(cast(int) (peeked.x * this.container.window.size.x / 2), 
-                    cast(int) (peeked.y * this.container.window.size.y)));
+        if(bound.points.isEmpty) return;
+        dVector prevPoint = bound.points.peek();
+        for(int i = 0; i < bound.points.size; i++) {
+            bound.points.iterate();
+            dVector nextPoint = bound.points.peek();
+            this.container.renderer.draw(new iVector(cast(int) (nextPoint.x * this.container.window.size.x / 2), 
+                    cast(int) (nextPoint.y * this.container.window.size.y)), 
+                    new iVector(cast(int) (prevPoint.x * this.container.window.size.x / 2), 
+                    cast(int) (prevPoint.y * this.container.window.size.y)));
         }
     }
 

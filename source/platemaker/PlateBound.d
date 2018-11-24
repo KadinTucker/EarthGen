@@ -10,8 +10,8 @@ import std.random;
  * in expanding plate boundaries
  */
 enum BoundGenConstants {
-    MIN_LENGTH=0.02,
-    MAX_LENGTH=0.05,
+    MIN_LENGTH=0.2,
+    MAX_LENGTH=0.5,
     ANGLE_VARIATION=PI_4
 }
 
@@ -22,8 +22,8 @@ enum BoundGenConstants {
  */
 class PlateBound {
 
-    Stack!dVector points; ///The stack of connected points that make up the boundary
-    Stack!double angles; ///The direction of the previous segment
+    Queue!dVector points; ///The stack of connected points that make up the boundary
+    double prevAngle; ///The direction of the previous segment
     int length; ///How many segments compose this bound
     bool isClosed; ///Whether or not the boundary is closed
 
@@ -32,9 +32,9 @@ class PlateBound {
      * Takes in the location of the initial point on the planet
      */
     this(double x, double y) {
-        this.points = new Stack!dVector();
-        this.angles = new Stack!double();
-        this.points.push(new dVector(x, y));
+        this.points = new Queue!dVector();
+        this.prevAngle = uniform(0.0, 2 * PI);
+        this.points.enqueue(new dVector(x, y));
     }
 
     /**
@@ -42,6 +42,17 @@ class PlateBound {
      */
     this(dVector location) {
         this(location.x, location.y);
+    }
+
+    /**
+     * Alternate constructor taking in an existing queue of points
+     * Constructor assumes an already closed boundary
+     * Previous angle does not matter, since the boundary is closed
+     */
+    this(Queue!dVector points) {
+        this.points = points;
+        this.isClosed = true;
+        this.length = this.points.size;
     }
 
     /**
@@ -56,8 +67,8 @@ class PlateBound {
         dVector newPoint = new dVector(cos(randomAngle), sin(randomAngle));
         newPoint.magnitude = uniform(cast(double) BoundGenConstants.MIN_LENGTH, cast(double) BoundGenConstants.MAX_LENGTH);
         dVector prevPoint = this.points.peek();
-        this.points.push(newPoint + prevPoint);
-        this.angles.push(randomAngle);
+        this.points.enqueue(newPoint + prevPoint);
+        this.prevAngle = randomAngle;
         this.length++;
         return this.points.peek();
     }
@@ -69,10 +80,7 @@ class PlateBound {
      * MAYBE: Strait-weight; take sqrt of deviated value
      */
     private double getRandomAngle() {
-        if(this.angles.isEmpty()) {
-            return uniform(0, 2 * PI);
-        }
-        return this.angles.peek() + uniform(-cast(double) BoundGenConstants.ANGLE_VARIATION, cast(double) BoundGenConstants.ANGLE_VARIATION);
+        return this.prevAngle + uniform(-cast(double) BoundGenConstants.ANGLE_VARIATION, cast(double) BoundGenConstants.ANGLE_VARIATION);
     }
 
 }

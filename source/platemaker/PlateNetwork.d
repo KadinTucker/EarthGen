@@ -12,7 +12,6 @@ class PlateNetwork {
 
     dVector[] junctions; ///A list of each junction between plate boundaries
     PlateBound[] boundaries; ///A list of every open plate boundary
-    dVector[] allJoints; ///A list of all of the joints, used to check for intersections
 
     /**
      * Initalizes a new PlateNetwork
@@ -55,11 +54,11 @@ class PlateNetwork {
      * If so, closes the boundary
      */
     void extendBoundaries() {
-        foreach(bound; this.boundaries) {
-            if(!bound.isClosed) {
-                this.allJoints ~= bound.append();
-                if(bound.length > 1 && this.intersects(this.allJoints[this.allJoints.length - 1], bound)) {
-                    bound.isClosed = true;
+        for(int i = 0; i < this.boundaries.length; i++) {
+            if(!this.boundaries[i].isClosed) {
+                dVector newPoint = this.boundaries[i].append();
+                if(this.boundaries[i].length > 3) {
+                    this.intersects(newPoint, this.boundaries[i]);
                 }
             }
         }
@@ -67,14 +66,26 @@ class PlateNetwork {
 
     /**
      * Checks for intersection
-     * Intersection is defined as being within some fraction
-     * of the minimum segment length from any joint
+     * Intersection is defined as being closer to any point than
+     * the maximum segment length from any point in the network
+     * and not being on the same boundary
      */
-    bool intersects(dVector point, PlateBound bound) {
-        foreach(joint; this.allJoints) {
-            if(point !is joint && (point - joint).magnitude < BoundGenConstants.MIN_LENGTH) {
-                bound.points.push(joint);
-                return true; 
+    bool intersects(dVector point, PlateBound onBound) {
+        foreach(bound; this.boundaries) {
+            Queue!dVector temp = new Queue!dVector(); //A temporary queue used to store the current state along the plate bound in the case of an intersection
+            Queue!dVector old = bound.points;
+            if(onBound !is bound) {
+                for(int i = 0; i < bound.points.size; i++) {
+                    dVector joint = bound.points.peek();
+                    if((point - joint).magnitude < BoundGenConstants.MAX_LENGTH) {
+                        onBound.points.enqueue(joint);
+                        this.boundaries ~= new PlateBound(temp);
+                        onBound.isClosed = true;
+                        return true; 
+                    }
+                    temp.enqueue(bound.points.dequeue);
+                }
+                bound.points = old;
             }
         }
         return false;
