@@ -3,6 +3,10 @@ module platemaker.NetworkDisplay;
 import d2d;
 import platemaker;
 
+immutable Color[] colors = [Color(255, 0, 0), Color(0, 255, 0), Color(0, 0, 255), Color(255, 255, 0), Color(255, 0, 255), Color(0, 255, 255),
+                            Color(125, 0, 0), Color(0, 125, 0), Color(0, 0, 125), Color(255, 125, 0), Color(255, 0, 125), Color(0, 255, 125),
+                            Color(125, 255, 0), Color(125, 0, 255), Color(0, 125, 125), Color(125, 125, 0), Color(125, 0, 125), Color(0, 125, 125)];
+
 /**
  * A d2d activity that draws a plate network
  */
@@ -33,27 +37,25 @@ class NetworkDisplay : Activity {
      * TODO:
      */
     override void draw() {
-        this.container.renderer.clear(Color(150, 150, 150));
-        foreach(bound; this.network.boundaries) {
-            this.drawPlateBound(bound);
+        this.container.renderer.clear(Color(50, 50, 50));
+        for(int i = 0; i < this._network.boundaries.length; i++) {
+            this.drawPlateBound(this._network.boundaries[i], i);
         }
     }
 
     /**
      * Draws a PlateBound object
      */
-    private void drawPlateBound(PlateBound bound) {
-        if(bound.isClosed) this.container.renderer.drawColor = Color(0, 0, 0);
-        else this.container.renderer.drawColor = Color(255, 0, 0);
-        if(bound.points.isEmpty) return;
-        dVector prevPoint = bound.points.peek();
-        for(int i = 0; i < bound.points.size; i++) {
-            bound.points.iterate();
-            dVector nextPoint = bound.points.peek();
-            this.container.renderer.draw(new iVector(cast(int) (nextPoint.x * this.container.window.size.x / 2), 
-                    cast(int) (nextPoint.y * this.container.window.size.y)), 
-                    new iVector(cast(int) (prevPoint.x * this.container.window.size.x / 2), 
-                    cast(int) (prevPoint.y * this.container.window.size.y)));
+    private void drawPlateBound(PlateBound bound, int index) {
+        /*if(bound.isClosed) this.container.renderer.drawColor = Color(255, 255, 255);
+        else*/ this.container.renderer.drawColor = colors[index % colors.length];
+        BoundJoint node = bound.initial;
+        while(node !is null && node.next !is null) {
+            this.container.renderer.draw(new iVector(cast(int) (node.location.x * this.container.window.size.x / 2), 
+                    cast(int) (node.location.y * this.container.window.size.y)), 
+                    new iVector(cast(int) (node.next.location.x * this.container.window.size.x / 2), 
+                    cast(int) (node.next.location.y * this.container.window.size.y)));
+            node = node.next;
         }
     }
 

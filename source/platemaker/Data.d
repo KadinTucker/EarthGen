@@ -131,12 +131,5 @@ class Queue(T) {
     bool isEmpty() {
         return this.top is null;
     }
-
-    /**
-     * Reverses the order of the queue
-     */
-    void reverse() {
-        
-    }
-
+    
 }

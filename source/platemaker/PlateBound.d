@@ -10,21 +10,43 @@ import std.random;
  * in expanding plate boundaries
  */
 enum BoundGenConstants {
-    MIN_LENGTH=0.2,
-    MAX_LENGTH=0.5,
+    MIN_LENGTH=0.02,
+    MAX_LENGTH=0.05,
     ANGLE_VARIATION=PI_4
 }
 
 /**
+ * A class representing a turning point on a boundary
+ * Contains a pointer to the next point on the boundary,
+ * and an actual location value
+ * Acts as a linked list node for a plate boundary
+ */
+class BoundJoint {
+
+    BoundJoint next; ///The next joint in the series of boundary joint
+    dVector location; ///The location of the bound joint as a point
+
+    /**
+     * Creates a new boundary joint at the given location
+     * The next joint is, by default, null
+     */
+    this(dVector location) {
+        this.location = location;
+    }
+
+}
+
+/**
  * A boundary between two plates
- * Represented by a series of sements
+ * Represented by a linked list implementation of boundary joints
  * Will continue expanding during generation if not closed off
  */
 class PlateBound {
 
-    Queue!dVector points; ///The stack of connected points that make up the boundary
-    double prevAngle; ///The direction of the previous segment
-    int length; ///How many segments compose this bound
+    BoundJoint initial; ///The initial point of the boundary; points through a series to the end
+    BoundJoint terminal; ///The final, most recently added point on the boundary
+    int length; ///The number of joints on this boundary
+    double prevAngle; ///The direction of the previous segment relative to the angle 0 as regularly defined
     bool isClosed; ///Whether or not the boundary is closed
 
     /**
@@ -32,45 +54,44 @@ class PlateBound {
      * Takes in the location of the initial point on the planet
      */
     this(double x, double y) {
-        this.points = new Queue!dVector();
         this.prevAngle = uniform(0.0, 2 * PI);
-        this.points.enqueue(new dVector(x, y));
+        this.initial = new BoundJoint(new dVector(x, y));
+        this.terminal = this.initial;
     }
 
     /**
-     * Alternate constructor taking in a dVector
+     * Alternate constructor, taking in a terminal and initial point, an isClosed value, and the previous angle
      */
-    this(dVector location) {
-        this(location.x, location.y);
+    this(BoundJoint initial, BoundJoint terminal, bool closed, double prevAngle) {
+        this.initial = initial;
+        this.terminal = terminal;
+        this.isClosed = closed;
+        this.prevAngle = prevAngle;
     }
 
     /**
-     * Alternate constructor taking in an existing queue of points
-     * Constructor assumes an already closed boundary
-     * Previous angle does not matter, since the boundary is closed
+     * Adds a bound joint to the end of the boundary
+     * Works as a normal linked list append
      */
-    this(Queue!dVector points) {
-        this.points = points;
-        this.isClosed = true;
-        this.length = this.points.size;
+    void add(BoundJoint joint) {
+        this.terminal.next = joint;
+        this.terminal = joint;
+        this.length++;
     }
 
     /**
      * Appends a randomly generated point to the boundary
      * Generates a random location by creating a unit vector 
      * at a random angle, then scaling it to a randomly determined length
-     * between the minimum and maximum as defined.
-     * Returns the new segment appended
+     * between the minimum and maximum as defined in the constants
      */
-    dVector append() {
+    void append() {
         double randomAngle = this.getRandomAngle();
         dVector newPoint = new dVector(cos(randomAngle), sin(randomAngle));
         newPoint.magnitude = uniform(cast(double) BoundGenConstants.MIN_LENGTH, cast(double) BoundGenConstants.MAX_LENGTH);
-        dVector prevPoint = this.points.peek();
-        this.points.enqueue(newPoint + prevPoint);
+        dVector prevPoint = this.terminal.location;
+        this.add(new BoundJoint(newPoint + prevPoint));
         this.prevAngle = randomAngle;
-        this.length++;
-        return this.points.peek();
     }
 
     /**
@@ -81,6 +102,17 @@ class PlateBound {
      */
     private double getRandomAngle() {
         return this.prevAngle + uniform(-cast(double) BoundGenConstants.ANGLE_VARIATION, cast(double) BoundGenConstants.ANGLE_VARIATION);
+    }
+
+    override string toString() {
+        string str = " ";
+        BoundJoint node = this.initial;
+        while(node !is null) {
+            str ~= node.location.toString;
+            if(node.next !is null) str = str ~ " -> "; 
+            node = node.next;
+        }
+        return str;
     }
 
 }

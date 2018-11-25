@@ -52,13 +52,14 @@ class PlateNetwork {
      * Runs the boundaries' append method, and checks if
      * the appended location causes an intersection
      * If so, closes the boundary
+     * Checks for intersections after appending happens
      */
     void extendBoundaries() {
         for(int i = 0; i < this.boundaries.length; i++) {
             if(!this.boundaries[i].isClosed) {
-                dVector newPoint = this.boundaries[i].append();
-                if(this.boundaries[i].length > 3) {
-                    this.intersects(newPoint, this.boundaries[i]);
+                this.boundaries[i].append();
+                if(this.boundaries[i].length > 2) {
+                    this.intersects(this.boundaries[i]);
                 }
             }
         }
@@ -69,23 +70,23 @@ class PlateNetwork {
      * Intersection is defined as being closer to any point than
      * the maximum segment length from any point in the network
      * and not being on the same boundary
+     * Uses the most recent point added of the given grown bound
      */
-    bool intersects(dVector point, PlateBound onBound) {
-        foreach(bound; this.boundaries) {
-            Queue!dVector temp = new Queue!dVector(); //A temporary queue used to store the current state along the plate bound in the case of an intersection
-            Queue!dVector old = bound.points;
-            if(onBound !is bound) {
-                for(int i = 0; i < bound.points.size; i++) {
-                    dVector joint = bound.points.peek();
-                    if((point - joint).magnitude < BoundGenConstants.MAX_LENGTH) {
-                        onBound.points.enqueue(joint);
-                        this.boundaries ~= new PlateBound(temp);
-                        onBound.isClosed = true;
-                        return true; 
+    bool intersects(PlateBound grownBound) {
+        for(int i = 0; i < this.boundaries.length; i++) {
+            if(grownBound !is this.boundaries[i]) {
+                BoundJoint node = this.boundaries[i].initial;
+                while(node !is null) {
+                    if((grownBound.terminal.location - node.location).magnitude < BoundGenConstants.MAX_LENGTH) {
+                        grownBound.add(new BoundJoint(node.location)); //Only takes the node's location, not its pointer
+                        grownBound.isClosed = true;
+                        this.boundaries ~= new PlateBound(node, this.boundaries[i].terminal, this.boundaries[i].isClosed, this.boundaries[i].prevAngle);
+                        this.boundaries[i].terminal = new BoundJoint(node.location);
+                        this.boundaries[i].isClosed = true;
+                        return true;
                     }
-                    temp.enqueue(bound.points.dequeue);
+                    node = node.next;
                 }
-                bound.points = old;
             }
         }
         return false;
