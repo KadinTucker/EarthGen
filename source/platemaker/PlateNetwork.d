@@ -10,8 +10,9 @@ import platemaker;
  */
 class PlateNetwork {
 
-    dVector[] junctions; ///A list of each junction between plate boundaries
-    PlateBound[] boundaries; ///A list of every open plate boundary
+    EndJoint[] endNodes; ///A list of the end nodes of every plate boundary
+    int nodesLeft; ///How many end nodes remain active
+    BoundJoint[] allJoints; ///A list of every joint in the network
 
     /**
      * Initalizes a new PlateNetwork
@@ -21,28 +22,28 @@ class PlateNetwork {
      */
     this(int numDivisions) {
         //Create square areas with which to distribute the intial boundaries 
-        //TODO: make loci better spacing with weight toward closer to the centers?
         double boundSize = 1.0 / numDivisions;
         for(double x = 0.0; x < 2.0; x += 2 * boundSize) {
             for(double y = 0.0; y < 1.0; y += boundSize) {
-                //Runs thrice in order to have the boundary extend in three directions; inits a junction
-                dVector location = new dVector(uniform(x, x + boundSize), uniform(y, y + boundSize));
-                foreach(i; 0..3) this.boundaries ~= new PlateBound(location.x, location.y);
-                this.junctions ~= location;
+                TripleJoint triple = new TripleJoint(new dVector(uniform(x, x + boundSize), uniform(y, y + boundSize)));
+                this.allJoints ~= triple;
+                //Adds all of the end joints on the triple joint to the appropriate lists
+                for(int i = 0; i < 3; i++) {
+                    this.endNodes ~= cast(EndJoint) triple.connectedTo[i];
+                    this.allJoints ~= triple.connectedTo[i];
+                }
             }
         }
-        //this.make();
+        this.nodesLeft = this.endNodes.length;
+        this.make();
     }
 
     /**
      * Generates a random plate network
      * Acts as the main method, of sorts
-     * TODO:
      */
     void make() {
-        //Currently a mode just as a test
-        //Runs extend boundaries six times
-        foreach(i; 0..100) {
+        while(this.nodesLeft > 0) {
             extendBoundaries();
         }
     }
@@ -55,12 +56,10 @@ class PlateNetwork {
      * Checks for intersections after appending happens
      */
     void extendBoundaries() {
-        for(int i = 0; i < this.boundaries.length; i++) {
-            if(!this.boundaries[i].isClosed) {
-                this.boundaries[i].append();
-                if(this.boundaries[i].length > 2) {
-                    this.intersects(this.boundaries[i]);
-                }
+        foreach(end; this.endNodes) {
+            if(!end.closed) {
+                end.transform(this);
+                this.intersects(end);
             }
         }
     }
@@ -72,21 +71,19 @@ class PlateNetwork {
      * and not being on the same boundary
      * Uses the most recent point added of the given grown bound
      */
-    bool intersects(PlateBound grownBound) {
-        for(int i = 0; i < this.boundaries.length; i++) {
-            if(grownBound !is this.boundaries[i]) {
-                BoundJoint node = this.boundaries[i].initial;
-                while(node !is null) {
-                    if((grownBound.terminal.location - node.location).magnitude < BoundGenConstants.MAX_LENGTH) {
-                        grownBound.add(new BoundJoint(node.location)); //Only takes the node's location, not its pointer
-                        grownBound.isClosed = true;
-                        this.boundaries ~= new PlateBound(node, this.boundaries[i].terminal, this.boundaries[i].isClosed, this.boundaries[i].prevAngle);
-                        this.boundaries[i].terminal = new BoundJoint(node.location);
-                        this.boundaries[i].isClosed = true;
-                        return true;
-                    }
-                    node = node.next;
+    bool intersects(EndJoint end) {
+        foreach(joint; this.allJoints) {
+            if(joint !is end.prevJoint && end.distance(joint) < BoundGenConstants.MAX_LENGTH) {
+                InterJoint appended = new InterJoint(end);
+                this.allJoints ~= appended;
+                if(cast(InterJoint) end.prevJoint) {
+                    (cast(InterJoint) end.prevJoint).nextJoint = appended;
                 }
+                if(cast(InterJoint) joint) {
+                    this.allJoints ~= new TripleJoint(cast(InterJoint) joint, appended);
+                }
+                this.nodesLeft -= 1;
+                end.closed = true;
             }
         }
         return false;
