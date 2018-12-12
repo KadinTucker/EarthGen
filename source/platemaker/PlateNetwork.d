@@ -1,6 +1,7 @@
 module platemaker.PlateNetwork;
 
 import std.algorithm;
+import std.math;
 import std.random;
 import d2d;
 import platemaker;
@@ -10,9 +11,7 @@ import platemaker;
  */
 class PlateNetwork {
 
-    EndJoint[] endNodes; ///A list of the end nodes of every plate boundary
-    int nodesLeft; ///How many end nodes remain active
-    BoundJoint[] allJoints; ///A list of every joint in the network
+    PlateBound[] allBounds; ///All of the plate boundaries in this network
 
     /**
      * Initalizes a new PlateNetwork
@@ -25,68 +24,81 @@ class PlateNetwork {
         double boundSize = 1.0 / numDivisions;
         for(double x = 0.0; x < 2.0; x += 2 * boundSize) {
             for(double y = 0.0; y < 1.0; y += boundSize) {
-                TripleJoint triple = new TripleJoint(new dVector(uniform(x, x + boundSize), uniform(y, y + boundSize)));
-                this.allJoints ~= triple;
-                //Adds all of the end joints on the triple joint to the appropriate lists
-                for(int i = 0; i < 3; i++) {
-                    this.endNodes ~= cast(EndJoint) triple.connectedTo[i];
-                    this.allJoints ~= triple.connectedTo[i];
+                dVector location = new dVector(uniform(x, x + boundSize), uniform(y, y + boundSize));
+                //Creates bounds that each point 120 degrees away from each other
+                for(double i = 0; i < 2 * PI; i += 2 * PI / 3) {
+                    this.allBounds ~= new PlateBound(location, i);
                 }
             }
         }
-        this.nodesLeft = this.endNodes.length;
-        this.make();
+        //this.make();
     }
 
     /**
      * Generates a random plate network
-     * Acts as the main method, of sorts
+     * Acts as the main method
+     * Runs all of the components of the generation algorithm
      */
     void make() {
-        while(this.nodesLeft > 0) {
-            extendBoundaries();
-        }
+        this.genBoundaries();
     }
 
     /**
-     * Extends all actively growing plate boundaries
-     * Runs the boundaries' append method, and checks if
-     * the appended location causes an intersection
-     * If so, closes the boundary
-     * Checks for intersections after appending happens
+     * Generates the boundaries of the plate network
      */
-    void extendBoundaries() {
-        foreach(end; this.endNodes) {
-            if(!end.closed) {
-                end.transform(this);
-                this.intersects(end);
+    void genBoundaries() {
+        bool loop = true;
+        while(loop) {
+            loop = false;
+            foreach(bound; this.allBounds) {
+                if(!bound.isClosed) {
+                    loop = true; //continue if there exists an open bound
+                    bound.appendVertex();
+                    this.intersects(); //Check for any intersections
+                }
             }
         }
     }
 
     /**
-     * Checks for intersection
+     * Extends all open boundaries on the network
+     * For testing purposes
+     */
+    void extendBoundaries() {
+        foreach(bound; this.allBounds) {
+            if(!bound.isClosed) {
+                bound.appendVertex();
+                this.intersects(); //Check for any intersections
+            }
+        }
+    }
+
+    /**
+     * Checks for intersection between all new vertices and existing vertices
      * Intersection is defined as being closer to any point than
      * the maximum segment length from any point in the network
      * and not being on the same boundary
-     * Uses the most recent point added of the given grown bound
+     * Uses the newest vertices, the ones on the ends of the boundaries
      */
-    bool intersects(EndJoint end) {
-        foreach(joint; this.allJoints) {
-            if(joint !is end.prevJoint && end.distance(joint) < BoundGenConstants.MAX_LENGTH) {
-                InterJoint appended = new InterJoint(end);
-                this.allJoints ~= appended;
-                if(cast(InterJoint) end.prevJoint) {
-                    (cast(InterJoint) end.prevJoint).nextJoint = appended;
+    void intersects() {
+        foreach(bound; this.allBounds) {
+            if(!bound.isClosed && bound.length > 2) { //Bound longer than 2, since otherwise starting bounds will intersect
+                foreach(otherBound; this.allBounds) {
+                    if(bound != otherBound) {
+                        for(int i = 0; i < otherBound.length; i++) {
+                            //If the distance between vertices is less than segment length
+                            //Uses vector operations to determine distance
+                            if((otherBound.vertices[i] - bound.vertices[bound.length - 1]).magnitude < BoundGenConstants.LENGTH) {
+                                //Intersection has occurred
+                                bound.appendVertex(otherBound.vertices[i]);
+                                otherBound.slices ~= i;
+                                bound.isClosed = true;
+                            }
+                        }
+                    }
                 }
-                if(cast(InterJoint) joint) {
-                    this.allJoints ~= new TripleJoint(cast(InterJoint) joint, appended);
-                }
-                this.nodesLeft -= 1;
-                end.closed = true;
             }
         }
-        return false;
     }
 
 }

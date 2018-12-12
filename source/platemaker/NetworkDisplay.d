@@ -34,27 +34,17 @@ class NetworkDisplay : Activity {
 
     /**
      * Draws the network to the screen
-     * Searches only for intermediate joints, since all intermediate joints will
-     * be connected to the remaining joints
      */
     override void draw() {
         this.container.renderer.drawColor = Color(150, 150, 150);
         this.container.renderer.clear();
         this.container.renderer.drawColor = Color(0, 0, 0);
-        foreach(joint; this._network.allJoints) {
-            if(cast(InterJoint) joint) {
-                if((cast(InterJoint) joint).prevJoint !is null) {
-                    this.container.renderer.draw(new iVector(this.container.window.size.x / 2 * cast(int) joint.location.x, 
-                            this.container.window.size.y * cast(int) joint.location.y), 
-                            new iVector(this.container.window.size.x / 2 * cast(int) (cast(InterJoint) joint).prevJoint.location.x, 
-                            this.container.window.size.y * cast(int) (cast(InterJoint) joint).prevJoint.location.y));
-                }
-                if((cast(InterJoint) joint).nextJoint !is null) {
-                    this.container.renderer.draw(new iVector(this.container.window.size.x / 2 * cast(int) joint.location.x, 
-                            this.container.window.size.y * cast(int) joint.location.y), 
-                            new iVector(this.container.window.size.x / 2 * cast(int) (cast(InterJoint) joint).nextJoint.location.x, 
-                            this.container.window.size.y * cast(int) (cast(InterJoint) joint).nextJoint.location.y));
-                }
+        foreach(bound; this._network.allBounds) {
+            for(int i = 0; i < bound.length - 1; i++) {
+                this.container.renderer.draw(new iVector(cast(int) (bound.vertices[i].x * this.container.window.size.x / 2), 
+                        cast(int) (bound.vertices[i].y * this.container.window.size.y)),
+                        new iVector(cast(int) (bound.vertices[i+1].x * this.container.window.size.x / 2), 
+                        cast(int) (bound.vertices[i+1].y * this.container.window.size.y)));
             }
         }
     }
@@ -63,7 +53,9 @@ class NetworkDisplay : Activity {
      * Handles events
      */
     override void handleEvent(SDL_Event event) {
-
+        if(event.type == SDL_MOUSEBUTTONDOWN) {
+            this._network.extendBoundaries();
+        }
     }
 
 }
