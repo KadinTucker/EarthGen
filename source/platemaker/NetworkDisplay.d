@@ -38,13 +38,25 @@ class NetworkDisplay : Activity {
     override void draw() {
         this.container.renderer.drawColor = Color(150, 150, 150);
         this.container.renderer.clear();
-        this.container.renderer.drawColor = Color(0, 0, 0);
-        foreach(bound; this._network.allBounds) {
-            for(int i = 0; i < bound.length - 1; i++) {
-                this.container.renderer.draw(new iVector(cast(int) (bound.vertices[i].x * this.container.window.size.x / 2), 
-                        cast(int) (bound.vertices[i].y * this.container.window.size.y)),
-                        new iVector(cast(int) (bound.vertices[i+1].x * this.container.window.size.x / 2), 
-                        cast(int) (bound.vertices[i+1].y * this.container.window.size.y)));
+        if(this._network.slices is null) {
+            this.container.renderer.drawColor = Color(0, 0, 0);
+            foreach(bound; this._network.allBounds) {
+                for(int i = 0; i < bound.length - 1; i++) {
+                    this.container.renderer.draw(new iVector(cast(int) (bound.vertices[i].x * this.container.window.size.x / 2), 
+                            cast(int) (bound.vertices[i].y * this.container.window.size.y)),
+                            new iVector(cast(int) (bound.vertices[i+1].x * this.container.window.size.x / 2), 
+                            cast(int) (bound.vertices[i+1].y * this.container.window.size.y)));
+                }
+            }
+        } else {
+            this.container.renderer.drawColor = Color(100, 0, 0);
+            foreach(slice; this._network.slices) {
+                for(int i = 1; i < slice.length; i++) {
+                    this.container.renderer.draw(new iVector(cast(int) (slice[i-1].x * this.container.window.size.x / 2), 
+                            cast(int) (slice[i-1].y * this.container.window.size.y)),
+                            new iVector(cast(int) (slice[i].x * this.container.window.size.x / 2), 
+                            cast(int) (slice[i].y * this.container.window.size.y)));
+                }
             }
         }
     }
@@ -55,6 +67,9 @@ class NetworkDisplay : Activity {
     override void handleEvent(SDL_Event event) {
         if(event.type == SDL_MOUSEBUTTONDOWN) {
             this._network.extendBoundaries();
+        }
+        else if(event.type == SDL_KEYDOWN) {
+            this._network.exportPlates("test.pnt");
         }
     }
 

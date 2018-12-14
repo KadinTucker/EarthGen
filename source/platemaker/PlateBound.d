@@ -38,6 +38,7 @@ class PlateBound {
         this.vertices ~= location;
         this.prevAngle = angle;
         this.appendVertex(angle);
+        this.slices ~= 0;
     }
 
     /**
@@ -68,11 +69,19 @@ class PlateBound {
             vertex.y = 0;
             hitEdge = true;
         }
+        this.vertices ~= vertex;
         if(hitEdge) {
             this.onEdge = true;
-            this.isClosed = true;
+            this.close();
         }
-        this.vertices ~= vertex;
+    }
+
+    /**
+     * Closes this plate boundary
+     */
+    void close() {
+        this.isClosed = true;
+        this.slices ~= this.length - 1;
     }
 
     /**
@@ -100,13 +109,18 @@ class PlateBound {
     }
 
     /**
-     * Sorts the slices on this plate in order of the indices
-     * Since the plate identification algorithm runs after bound generation,
-     * this occurs all at once at the end of bound generation
-     * Implements a merge sort algorithm
+     * Adds a slice location to this boundary
+     * Moves the slice to a location that
+     * follows an ascending order
      */
-    void sortSlices() {
-
+    void addSlice(int slice) {
+        this.slices ~= slice;
+        int i = this.slices.length - 1;
+        while(i > 0 && this.slices[i-1] > slice) {
+            this.slices[i] = this.slices[i-1]; //Shift element forward
+            i--;
+        }
+        this.slices[i] = slice;
     }
 
 }

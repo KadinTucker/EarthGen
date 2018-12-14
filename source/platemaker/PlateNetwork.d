@@ -1,6 +1,8 @@
 module platemaker.PlateNetwork;
 
-import std.algorithm;
+import std.array;
+import std.conv;
+import std.file;
 import std.math;
 import std.random;
 import d2d;
@@ -12,6 +14,7 @@ import platemaker;
 class PlateNetwork {
 
     PlateBound[] allBounds; ///All of the plate boundaries in this network
+    dVector[][] slices; ///All of the slices in the network; null until finished
 
     /**
      * Initalizes a new PlateNetwork
@@ -32,6 +35,25 @@ class PlateNetwork {
             }
         }
         //this.make();
+    }
+
+    /**
+     * Alternate constructor, which, instead of making from scratch,
+     * takes pre-existing data from a file
+     * Assumes that the plate from file has finished generation 
+     */
+    this(string filename) {
+        string data = readText(filename);
+        string[] lines = data.split("\n");
+        foreach(line; lines) {
+            dVector[] slice;
+            string[] vertices = line.split("/");
+            foreach(vertex; vertices) {
+                string[] components = vertex.split(",");
+                slice ~= new dVector(components[0].to!double, components[1].to!double);
+            }
+            this.slices ~= slice;
+        }
     }
 
     /**
@@ -61,15 +83,60 @@ class PlateNetwork {
     }
 
     /**
+     * Gets all of the slices in the network
+     * A slice is represented as a list of dVector vertices
+     */
+    dVector[][] getAllSlices() {
+        dVector[][] allSlices;
+        foreach(bound; this.allBounds) {
+            for(int i = 1; i < bound.slices.length; i++) {
+                dVector[] slice;
+                for(int j = bound.slices[i - 1]; j <= bound.slices[i]; j++) {
+                    slice ~= bound.vertices[j];
+                }
+                if(slice.length > 0) allSlices ~= slice;
+            }
+        }
+        return allSlices;
+    }
+
+    /**
+     * Exports the plate network, all of its slices, to a file
+     * The data are stored as the list of all slices,
+     * with commas between corresponding x and y coordinates,
+     * and forward slashes between each vertex
+     * Each slice goes on a different line
+     */
+    void exportPlates(string filename) {
+        string data = "";
+        dVector[][] allSlices = this.getAllSlices();
+        for(int i = 0; i < allSlices.length; i++) {
+            for(int j = 0; j < allSlices[i].length; j++) {
+                data ~= allSlices[i][j].x.to!string;
+                data ~= ",";
+                data ~= allSlices[i][j].y.to!string;
+                if(j < allSlices[i].length - 1) data ~= "/";
+            }
+            if(i < allSlices.length -1) data ~= "\n";
+        }
+        std.file.write(filename, data);
+    }
+
+    /**
      * Extends all open boundaries on the network
      * For testing purposes
      */
     void extendBoundaries() {
+        bool finished = true;
         foreach(bound; this.allBounds) {
             if(!bound.isClosed) {
+                finished = false;
                 bound.appendVertex();
                 this.intersects(); //Check for any intersections
             }
+        }
+        if(finished) {
+            this.slices = this.getAllSlices();
         }
     }
 
@@ -91,8 +158,8 @@ class PlateNetwork {
                             if((otherBound.vertices[i] - bound.vertices[bound.length - 1]).magnitude < BoundGenConstants.LENGTH) {
                                 //Intersection has occurred
                                 bound.appendVertex(otherBound.vertices[i]);
-                                otherBound.slices ~= i;
-                                bound.isClosed = true;
+                                otherBound.addSlice(i);
+                                bound.close();
                             }
                         }
                     }
